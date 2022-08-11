@@ -349,3 +349,35 @@
     margin-bottom: 14px;
     background-color: #3a3a3a;
   }
+  .MainDisplay{
+    width: 42em;
+    height: 96vh;
+    margin: 2vh auto;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 5px;
+  }
+  .InputField{
+    width: 100%;
+    font-size: 21px;
+    border: 2px solid #f3f3f3;
+    padding: 12px;
+    border-radius: 5px;
+    resize: none;
+    margin: 0;
+  }
+  .InputField:disabled{
+    user-select: none;
+    background-color: #828282 !important;
+  }
+
+  .MainDisplay :is(input , textarea ){
+    outline: none;
+    border-width: 0px;
+  }
+  .MainDisplay :is(input:focus, textarea:focus){
+    border-color: #ff3232 !important;
+  }
+  .unInteractiveLayer{
+    background-color: #707070;
+  }

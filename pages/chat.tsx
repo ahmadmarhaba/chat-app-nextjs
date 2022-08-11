@@ -1,13 +1,19 @@
 import { NextPage } from "next";
 import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import styles from '../styles/Chat.module.css'
 import { ShowError } from '../components/error'
 import MessageForm from '../components/Message'
+import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { app } from "./_app";
+import { fetchSocket } from "../store/actions/socketAction";
 
-const Chat: NextPage = ({friendID , friendName} : any) => {
+const db = getFirestore(app);
 
+const Chat: NextPage = () => {
+    
+    const dispatch : any = useDispatch();
     let { user } = useSelector((state: any) => state.user)
     let { socket } = useSelector((state: any) => state.socket)
 
@@ -15,21 +21,30 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
     let [chatList , SetChatList] : any = useState([])
     let chatPrevListRef : any = useRef(chatList)
     let messagesEndRef  : any = useRef(null)
-    let mediaHolderRef = useRef(null)
+    // let mediaHolderRef = useRef(null)
+
     let [writtenMessagesCounter , SetWrittenMessagesCounter] = useState(0)
     let [mediaMessagesCounter , SetMediaMessagesCounter] = useState(0)
+
     let lastMsgFromUserNameRef = useRef(null)
     let lastMsgFromUserCodeRef = useRef(null)
     let [lastMsgFromUserName , SetLastMsgFromUserName] = useState(null)
     let [lastMsgFromUserCode , SetLastMsgFromUserCode] = useState(null)
-    let mediaFileRef  : any = useRef(null);
-    let [mediaUploaded , SetMediaUploaded] = useState([])
-    let mediaUploadedRef : any = useRef(mediaUploaded)
+
+    // let mediaFileRef  : any = useRef(null);
+    // let [mediaUploaded , SetMediaUploaded] = useState([])
+    // let mediaUploadedRef : any = useRef(mediaUploaded)
     
     let [fetchMoreMsgs , SetFetchMoreMsgs]  = useState(false);
     let [chatCurrentPage , SetChatPage]  = useState(1);
     // const [inCall , SetInCall]  = useState<boolean>(WindowLoad.inCall);
 
+    const [friendInfo , SetFriendInfo] = useState<friendInfo>();
+    interface friendInfo{
+        image : string;
+        name : string;
+        email: string;
+    }
     const scrollToBottom = () => {
         setTimeout(()=>{ messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) },50) 
     }
@@ -40,6 +55,30 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
     //     // })
     //     SetInCall(WindowLoad.inCall);
     // },[WindowLoad.inCall])
+
+    useEffect(()=>{
+      if(!socket){ dispatch(fetchSocket()) }
+    },[socket])
+    useEffect(()=>{
+        if(!friendInfo){
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const id = urlParams.get('id')
+            if(id && id.length > 0){
+                fetchDocument(id)
+            }
+        }
+    },[friendInfo])
+    async function fetchDocument(id : string){
+        const docRef = doc(db, "users", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            SetFriendInfo(docSnap.data() as friendInfo)
+        } else {
+        // doc.data() will be undefined in this case
+        console.log("No such document!");
+        }
+    }
     useEffect(()=>{
         if(!socket) return;
         // socket.on('SetCallFromChat',(data)=>{
@@ -192,51 +231,51 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
         SetMediaMessagesCounter(mediaMessagesCounter + 1)
         SetWrittenMessagesCounter(writtenMessagesCounter + 1)
 
-        if(Text_TempMedia) {
-            let sendMedia = []
-            Text_TempMedia.forEach(async (files : any , index : any) => {
-               let tempIndex = 0;
-               const mediaMessageResult = await uploadMediaWithMessage(Text_MediaFolder , files.file , index , Text_TempMedia);
+        // if(Text_TempMedia) {
+        //     let sendMedia = []
+        //     Text_TempMedia.forEach(async (files : any , index : any) => {
+        //        let tempIndex = 0;
+        //        const mediaMessageResult = await uploadMediaWithMessage(Text_MediaFolder , files.file , index , Text_TempMedia);
 
-               if(!mediaMessageResult) {
-                let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
-                const messageIndex = [...chatPrevListRef.current].indexOf(message)
-                if(!message) return;
-                    tempIndex = Text_TempMedia.indexOf(message.Text_TempMedia[index])
-                if(tempIndex == -1) return;
-                    message.Text_TempMedia[tempIndex].retry = true;
-                SetChatList((oldArray  : any)=> {
-                    let newArr = [
-                        ...oldArray.slice(0, messageIndex),
-                        message,
-                        ...oldArray.slice(messageIndex + 1),
-                    ];
-                    chatPrevListRef.current = newArr
-                    return newArr;
-                })
-               }else{
-                   let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
-                   const messageIndex = [...chatPrevListRef.current].indexOf(message)
-                   if(!message) return;
-                       tempIndex = Text_TempMedia.indexOf(message.Text_TempMedia[index])
-                   if(tempIndex == -1) return;
-                       message.Text_TempMedia[tempIndex].finished = true;
-                    SetChatList((oldArray : any) => {
-                        let newArr = [
-                            ...oldArray.slice(0, messageIndex),
-                            message,
-                            ...oldArray.slice(messageIndex + 1),
-                        ];
-                        chatPrevListRef.current = newArr
-                        return newArr;
-                    })
-               }
-               sendMedia.push(mediaMessageResult);
-               if(sendMedia.length == Text_TempMedia.length){
-                   socket.emit('sendMessage', {id : mediaMessagesCounter , folderName : Text_MediaFolder})
-               }
-            });
-        }
+        //        if(!mediaMessageResult) {
+        //         let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
+        //         const messageIndex = [...chatPrevListRef.current].indexOf(message)
+        //         if(!message) return;
+        //             tempIndex = Text_TempMedia.indexOf(message.Text_TempMedia[index])
+        //         if(tempIndex == -1) return;
+        //             message.Text_TempMedia[tempIndex].retry = true;
+        //         SetChatList((oldArray  : any)=> {
+        //             let newArr = [
+        //                 ...oldArray.slice(0, messageIndex),
+        //                 message,
+        //                 ...oldArray.slice(messageIndex + 1),
+        //             ];
+        //             chatPrevListRef.current = newArr
+        //             return newArr;
+        //         })
+        //        }else{
+        //            let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
+        //            const messageIndex = [...chatPrevListRef.current].indexOf(message)
+        //            if(!message) return;
+        //                tempIndex = Text_TempMedia.indexOf(message.Text_TempMedia[index])
+        //            if(tempIndex == -1) return;
+        //                message.Text_TempMedia[tempIndex].finished = true;
+        //             SetChatList((oldArray : any) => {
+        //                 let newArr = [
+        //                     ...oldArray.slice(0, messageIndex),
+        //                     message,
+        //                     ...oldArray.slice(messageIndex + 1),
+        //                 ];
+        //                 chatPrevListRef.current = newArr
+        //                 return newArr;
+        //             })
+        //        }
+        //        sendMedia.push(mediaMessageResult);
+        //        if(sendMedia.length == Text_TempMedia.length){
+        //            socket.emit('sendMessage', {id : mediaMessagesCounter , folderName : Text_MediaFolder})
+        //        }
+        //     });
+        // }
     }
     const handleInput = (e : any) =>{
         if(messageText.current?.scrollHeight > 250) return;
@@ -269,130 +308,128 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
             }
 
             
-            if(mediaUploaded && mediaUploaded.length != 0){ 
-                let files = [...mediaUploadedRef.current];
-                mediaFileRef.current.value = "";
-                mediaUploadedRef.current = [];
-                SetMediaUploaded([]);
-                const folderName = await axios.post('/CreateTempDirectory',{
-                    token : user.token,
-                    directoryType : 'ChatFiles'
-                  }).then(function (res : any) {
-                      if(res && res.data && res.data.ok && res.data.folderName)
-                        return res.data.folderName;
-                      else
-                        return false;
-                  }).catch(function (error : any) {
-                      if(error) 
-                      ShowError("CreateTempDirectory: Encountered error no temp directory created")
-                      return false;
-                  });
-                  if(folderName){
-                      CreateMessageHolder("oldMedia_"+mediaMessagesCounter,null , files, folderName , null ,user.name,user.code , user.prof, user.token , showUser)
-                  }
-            }
+            // if(mediaUploaded && mediaUploaded.length != 0){ 
+            //     let files = [...mediaUploadedRef.current];
+            //     mediaFileRef.current.value = "";
+            //     mediaUploadedRef.current = [];
+            //     SetMediaUploaded([]);
+            //     const folderName = await axios.post('/CreateTempDirectory',{
+            //         token : user.token,
+            //         directoryType : 'ChatFiles'
+            //       }).then(function (res : any) {
+            //           if(res && res.data && res.data.ok && res.data.folderName)
+            //             return res.data.folderName;
+            //           else
+            //             return false;
+            //       }).catch(function (error : any) {
+            //           if(error) 
+            //           ShowError("CreateTempDirectory: Encountered error no temp directory created")
+            //           return false;
+            //       });
+            //       if(folderName){
+            //           CreateMessageHolder("oldMedia_"+mediaMessagesCounter,null , files, folderName , null ,user.name,user.code , user.prof, user.token , showUser)
+            //       }
+            // }
         }
       }
 
-      const UploadMediaFile = async (e : any) => {
-        const files = e.target.files
-        for (let index = 0; index < files.length; index++) {
-            if(files[index].size >= 10 * 1024 * 1024){
-                e.target.value = "";
-                ShowError("File size huge exceeds 10 MB");
-                return;
-              }
-              if(!checkAcceptedExtensions(files[index])) {
-                e.target.value = "";
-                ShowError("File type must be jpeg/jpg/png/mp4/mp3/mov/avi/mkv");
-                return;
-              }
-              let data = {
-                  id : index,
-                  file : files[index],
-                  src : URL.createObjectURL(files[index]) ,
-                  name : files[index].name ,
-                  size: (files[index].size / 1024).toFixed(2),
-                  itsImage : files[index].type.includes("image"),
-                  percentage : 0,
-                  finished : false,
-                  cancel : null,
-                  retry : false
-                } as any
-                URL.revokeObjectURL(files[index])  
-                mediaUploadedRef.current = mediaUploadedRef.current ? [...mediaUploadedRef.current].concat([data]) : [data]
-                SetMediaUploaded(mediaUploadedRef.current) 
-            }
-        messageText.current.focus();
-        e.target.value = "";
-      }
-      async function uploadMediaWithMessage(folderName : any, file : any , indexArr  : any, arr : any ){
-        const form = new FormData();
-        let tempIndex = 0;
-        form.append('files',file)
-        let cancelTokenSource = axios.CancelToken.source();
+    //   const UploadMediaFile = async (e : any) => {
+    //     const files = e.target.files
+    //     for (let index = 0; index < files.length; index++) {
+    //         if(files[index].size >= 10 * 1024 * 1024){
+    //             e.target.value = "";
+    //             ShowError("File size huge exceeds 10 MB");
+    //             return;
+    //           }
+    //           if(!checkAcceptedExtensions(files[index])) {
+    //             e.target.value = "";
+    //             ShowError("File type must be jpeg/jpg/png/mp4/mp3/mov/avi/mkv");
+    //             return;
+    //           }
+    //           let data = {
+    //               id : index,
+    //               file : files[index],
+    //               src : URL.createObjectURL(files[index]) ,
+    //               name : files[index].name ,
+    //               size: (files[index].size / 1024).toFixed(2),
+    //               itsImage : files[index].type.includes("image"),
+    //               percentage : 0,
+    //               finished : false,
+    //               cancel : null,
+    //               retry : false
+    //             } as any
+    //             URL.revokeObjectURL(files[index])  
+    //             mediaUploadedRef.current = mediaUploadedRef.current ? [...mediaUploadedRef.current].concat([data]) : [data]
+    //             SetMediaUploaded(mediaUploadedRef.current) 
+    //         }
+    //     messageText.current.focus();
+    //     e.target.value = "";
+    //   }
+    //   async function uploadMediaWithMessage(folderName : any, file : any , indexArr  : any, arr : any ){
+    //     const form = new FormData();
+    //     let tempIndex = 0;
+    //     form.append('files',file)
+    //     let cancelTokenSource = axios.CancelToken.source();
 
-        let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
-        const index = [...chatPrevListRef.current].indexOf(message)
-        if(!message) return;
-            tempIndex = arr.indexOf(message.Text_TempMedia[indexArr])
-        if(tempIndex == -1) return;
-            message.Text_TempMedia[tempIndex].cancel = () => { cancelTokenSource.cancel('Upload cancelled')};
+    //     let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
+    //     const index = [...chatPrevListRef.current].indexOf(message)
+    //     if(!message) return;
+    //         tempIndex = arr.indexOf(message.Text_TempMedia[indexArr])
+    //     if(tempIndex == -1) return;
+    //         message.Text_TempMedia[tempIndex].cancel = () => { cancelTokenSource.cancel('Upload cancelled')};
 
-        SetChatList((oldArray : any) => {
-            let newArr = [
-                ...oldArray.slice(0, index),
-                message,
-                ...oldArray.slice(index + 1),
-            ];
-            chatPrevListRef.current = newArr
-            return newArr;
-        })
+    //     SetChatList((oldArray : any) => {
+    //         let newArr = [
+    //             ...oldArray.slice(0, index),
+    //             message,
+    //             ...oldArray.slice(index + 1),
+    //         ];
+    //         chatPrevListRef.current = newArr
+    //         return newArr;
+    //     })
 
-        try {
-          return await axios.request({
-              method: "post", 
-              url: '/upload?token='+user.token+"&folderName="+ folderName+'&directoryFolder=ChatFiles', 
-              data: form,
-              cancelToken: cancelTokenSource.token,
-              onUploadProgress: (progress : any) => {
-                let ratio = progress.loaded / progress.total
-                let percentage = (ratio * 100).toFixed(2);
-                let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
-                const index = [...chatPrevListRef.current].indexOf(message)
-                if(!message) return;
-                    tempIndex = arr.indexOf(message.Text_TempMedia[indexArr])
-                if(tempIndex == -1) return;
-                    message.Text_TempMedia[tempIndex].percentage = percentage
+    //     try {
+    //       return await axios.request({
+    //           method: "post", 
+    //           url: '/upload?token='+user.token+"&folderName="+ folderName+'&directoryFolder=ChatFiles', 
+    //           data: form,
+    //           cancelToken: cancelTokenSource.token,
+    //           onUploadProgress: (progress : any) => {
+    //             let ratio = progress.loaded / progress.total
+    //             let percentage = (ratio * 100).toFixed(2);
+    //             let message = [...chatPrevListRef.current].find(msg => msg.Old_ID == "oldMedia_"+ mediaMessagesCounter)
+    //             const index = [...chatPrevListRef.current].indexOf(message)
+    //             if(!message) return;
+    //                 tempIndex = arr.indexOf(message.Text_TempMedia[indexArr])
+    //             if(tempIndex == -1) return;
+    //                 message.Text_TempMedia[tempIndex].percentage = percentage
 
-                SetChatList((oldArray  : any)=> {
-                    let newArr = [
-                        ...oldArray.slice(0, index),
-                        message,
-                        ...oldArray.slice(index + 1),
-                    ];
-                    chatPrevListRef.current = newArr
-                    return newArr;
-                })
-              }
-            }).then( (response : any) => {
-              if(response.data.ok){
-                return true
-              }else{
-                ShowError(response.data.error);
-              }
-                return false;
-            }).catch((error : any) => {
-                ShowError(error);
-                return false;
-            })
-           
-          } catch (err) {
-            ShowError('Error uploading the files')
-            return false;
-          }
-         
-      }
+    //             SetChatList((oldArray  : any)=> {
+    //                 let newArr = [
+    //                     ...oldArray.slice(0, index),
+    //                     message,
+    //                     ...oldArray.slice(index + 1),
+    //                 ];
+    //                 chatPrevListRef.current = newArr
+    //                 return newArr;
+    //             })
+    //           }
+    //         }).then( (response : any) => {
+    //           if(response.data.ok){
+    //             return true
+    //           }else{
+    //             ShowError(response.data.error);
+    //           }
+    //             return false;
+    //         }).catch((error : any) => {
+    //             ShowError(error);
+    //             return false;
+    //         })
+    //       } catch (err) {
+    //         ShowError('Error uploading the files')
+    //         return false;
+    //       }
+    //   }
       
         const handleScroll = (e : any) => {
             const bottom = e.target.scrollHeight + e.target.scrollTop  <= e.target.clientHeight + 250;
@@ -403,18 +440,18 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
                 })
             }
         } 
+
+    if(!friendInfo) return null;
     return (
         <>
-        <div className={`Nav`}> 
-        </div>
-        <div className={`MainDisplay ${styles.chat} ${''
+        <div className={`${styles.MainDisplay} ${styles.chat} ${''
             // inCall ? styles.pushDown : ''
         }`}>
             {
                 // !inCall ? 
                 <div className={`${styles.friendNameChat}`}>
                     <div className={`${styles.userName}`}>
-                        <p>{friendName}</p>
+                        <p>{friendInfo.name}</p>
                     </div>
                     {/* <div className={`${styles.utilities}`}>
                         <span className='secondLayer bi bi-telephone-fill' onClick={()=>{ 
@@ -435,10 +472,10 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
                                 msg.newMessages ? <div className={`${styles.newMessages}`}>{`(${msg.newMessages}) new message${msg.newMessages > 1 ? 's' : ''}`}</div> : null
                             } */}
                     })
-                    :<div className={`unInteractiveLayer ${styles.credentials}`}>{`Please dont share your information`}<br /> {` We will never ask for your credentials`}</div>
+                    :<div className={`${styles.unInteractiveLayer} ${styles.credentials}`}>{`Please dont share your information`}<br /> {` We will never ask for your credentials`}</div>
                 }
             </div>
-                {mediaUploaded && mediaUploaded.length > 0 ?
+                {/* {mediaUploaded && mediaUploaded.length > 0 ?
                     <div className={`borderColor ${styles.mediaHolder}`} ref={mediaHolderRef}>
                     {
                       mediaUploaded.map((data : any , index)=>{  
@@ -476,13 +513,13 @@ const Chat: NextPage = ({friendID , friendName} : any) => {
                         ) 
                       })}
                     </div> : null
-                }
-                <div className={`InputField ${styles.inputHolder}`}>
+                } */}
+                <div className={`${styles.InputField} ${styles.inputHolder}`}>
                     <textarea placeholder={`Type here...`} ref={messageText}  onKeyDown={handleKeyDown} maxLength={300} onInput={handleInput}/>
-                    <div>
+                    {/* <div>
                         <label className={`bi bi-upload`} htmlFor="mediaFileInsertPost"></label>
                         <input type="file" id="mediaFileInsertPost" onChange={UploadMediaFile} style={{display:"none"}} ref={mediaFileRef} multiple/>
-                    </div>
+                    </div> */}
                 </div>
         </div>
         </>

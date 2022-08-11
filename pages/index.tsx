@@ -8,6 +8,8 @@ import React , { useEffect, useState } from 'react';
 import { withIronSessionSsr } from "iron-session/next";
 import axios from 'axios';
 import Router from 'next/router'
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSocket } from '../store/actions/socketAction';
 
 const db = getFirestore(app);
 
@@ -40,6 +42,7 @@ const Home: NextPage = ({user} : any) => {
         Router.push('/auth')
     }
   });
+
   if(!user) return null;
   return (
     <>
