@@ -1,0 +1,351 @@
+  .chat {
+    display: flex;
+    flex-direction: column;
+    left: 16px;
+  }
+
+  .msgContainer{
+    display: flex;
+    flex-direction: row;
+    padding: 7px;
+    position: relative;
+    border-radius: 5px;
+  }
+  .textHolder {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    margin-bottom: 14px;
+    height: 100%;
+  }
+  /* .changeTextHolderHeight{
+    bottom: 378px;
+  } */
+.pushDown{
+  margin-top: 470px;
+}
+.deletedMsg{
+  font-size: inherit;
+}
+  .inputHolder{
+    border-color: #828282;
+    background-color: #444444;
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20px;
+  }
+  .inputHolder textarea{
+    height: 25px;
+    width: 100%;
+    background-color: transparent;
+    resize: none;
+    font-size: 21px;
+    padding: 0%;
+    height: 25px;
+    color: #f9f9f9;
+  }
+  .inputHolder label{
+    padding: 0px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .inputHolder div{
+    display: flex;
+    flex-direction: row;
+  }
+  
+  .friendNameChat{
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .utilities span{
+    width: 48px;
+    height: 48px;
+    display: block;
+    border-radius: 5px;
+    font-size: 22px;
+    line-height: 48px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .userName{
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .friendNameChat p{
+    margin: 0;
+    font-size: 30px;
+    margin-right: 10px;
+  }
+  .msgSeen {
+    color: #ff3232;
+  }
+  .checkMark{
+    font-size: 20px;
+    position: absolute;
+    right: 8px;
+    bottom: 0px;
+  }
+  .textHolder > .msgContainer .msgSeen{
+    visibility: visible;
+}
+  .textHolder > .msgContainer ~ .msgContainer .msgSeen{
+    visibility: hidden;
+}
+  .msgText{
+    display: flex;
+    flex-direction: row;
+
+  }
+  .msgText span{
+    white-space: pre-wrap;
+    width: 100%;
+    margin-right: 20px;
+    overflow-wrap: anywhere;
+  }
+  .shortTime{
+    visibility: hidden;
+    line-height: 18px;
+    width: 50px;
+    text-align: center;
+  }
+  .longTime {
+    font-size: 12px;
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    display: flex;
+  }
+.edited{
+  margin-left: 7px;
+}
+  .msgUserImage{
+    height: 50px;
+    width: 50px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius:5px;
+    
+  }
+  .senderTime {
+    user-select: none;
+    padding-top: 18px;
+    padding-left: 11px;
+    font-size: 12px;
+    float: left;
+  }
+
+.msgUserName{
+  font-size: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.msgUserName p:hover{
+  text-decoration: underline;
+}
+.friendNameMsg p{
+  color: #8181ff  !important;
+}
+.msgUserName p{
+  color: #ff3232;
+  cursor: pointer;
+  margin:0;
+  margin-right: 4px;
+}
+  .textDiv {
+    width: 96%;
+    padding-right: 26px;
+    padding-left: 12px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .msgContainer:hover{
+    background-color: #3a3a3a;
+  }
+  .msgContainer:hover .shortTime{
+    visibility: visible;
+  }
+  
+  .showMoreText {
+    width: 96%;
+    margin-left: 2%;
+    border-radius: 5px;
+    padding: 4% 0%;
+    text-align: center;
+    font-size: 17px;
+    cursor: pointer;
+  }
+  
+  .addDontShareCredentials {
+    width: 82%;
+    user-select: none;
+    margin: auto;
+    margin-top: 2%;
+    font-size: 17px;
+    border-radius: 5px;
+    padding: 5%;
+    text-align: center;
+  }
+  .mediaHolder{
+    margin-bottom: 14px;
+    border-radius: 5px;
+    border: 1px solid;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+  .mediaDiv{
+    width: 120px;
+    height: 120px;
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+    margin: 14px;
+  }
+
+  .mediaDiv :is(img , video){
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+
+  .textDiv :is(img , video){
+    max-width: 500px;
+    max-height: 300px;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+  .msgMediaHolder{
+    position: relative;
+    width: 100%;
+
+    overflow: hidden;
+  }
+  .msgMediaResult{
+    width: 100%;
+    margin-top: 6px;
+  }
+  .msgMediaResult:first-child{
+    margin-top: 0;
+  }
+.tempMediaDiv{
+  height: 120px;
+  display: flex;
+  flex-direction: row;
+  max-width: 100%;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+ 
+  .newMessages{
+    color: #ff3232;
+    width: 100%;
+    text-align: center;
+    padding: 8px 0;
+  }
+  .tempMediaContainer{
+    position: relative;
+    max-width: 300px;
+    min-width: 140px;
+  }
+  .tempMediaContainer :is(img,video){
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  .tempMediaInfo{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+  }
+  .tempMediaInfo div{
+    padding: 0px 20px;
+  }
+  .msgContainer:hover .interactDiv{
+    visibility: visible;
+  }
+.interactDiv:hover{
+  visibility: visible;
+}
+  .interactDiv{
+    visibility: hidden;
+    position: absolute;
+    top: -34px;
+    right: 8px;
+    border-radius: 5px;
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+  }
+  .interactDiv span{
+    font-size: 18px;
+    display: block;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-right: 1px solid;
+  }
+  .interactDiv span:last-child{
+    border: none;
+  }
+  .interactDiv span:hover{
+    color: #ff3232
+  }
+  .mediaDiv:hover .removeMediaDiv{
+    visibility: visible;
+  }
+  .removeMediaDiv{
+    visibility: hidden;
+    color: #ff3232;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    place-content: center;
+    align-items: center;
+    font-size: 38px;
+    position: absolute;
+    z-index: 1;
+    background-color: #00000029;
+  }
+  .statusInfo{
+    display: flex;
+    align-items: center;
+  }
+  .statusInfo span{
+    font-size: 26px;
+    margin-left: 14px;
+    cursor: pointer;
+  }
+  .progressPercent{
+    font-size: 17px !important;
+  }
+  .statusInfo progress{
+    height: 12px;
+    color: #ff3232;
+    width: 100%;
+  }
+  .credentials{
+    padding: 22px;
+    border-radius: 5px;
+    font-size: 21px;
+    line-height: 50px;
+    text-align: center;
+  }
+  .callContainer{
+    height: 525px;
+    border-radius: 5px;
+    margin-bottom: 14px;
+    background-color: #3a3a3a;
+  }
