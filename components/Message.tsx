@@ -2,11 +2,10 @@ import { useRef, useState } from 'react'
 import moment from "moment";
 import styles from '../styles/Chat.module.css'
 
-const MessageForm = ({socket ,id,myName,myCode,myPicToken,myPicType, msgWriterName,msgWriterCode ,talkingWithPicToken, talkingWithPicType, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag} : any)=> {
+const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag} : any)=> {
 
-    let [myMsg,SetMyMSg] = useState( myName === msgWriterName && myCode === msgWriterCode);
-    let [token , SetPicToken] = useState(myMsg ? myPicToken : talkingWithPicToken)
-    let [prof , SetPicType] = useState(myMsg ? myPicType : talkingWithPicType)
+    let [myMsg,SetMyMSg] = useState( myId === friendId);
+    const defaultImg = `https://img.icons8.com/office/40/000000/test-account.png`;
     let EditedText : any = useRef(null);
     let [textBeingEdited, SetTextBeingEdited] = useState(false);
     mediaFiles = mediaFiles ? mediaFiles.toString().split(",") : null
@@ -14,7 +13,7 @@ const MessageForm = ({socket ,id,myName,myCode,myPicToken,myPicType, msgWriterNa
         <div className={`${styles.msgContainer}`}>
             <div className={`${styles.msgUserInfo}`}>
                 {
-                    showUser ?  <div className={`secondLayer ${styles.msgUserImage}`} style={{ backgroundImage:  prof ? `url(${"/MediaFiles/ProfilePic/" + token + "/" + prof })` : 'none'}}></div> : null
+                    showUser ?  <div className={`secondLayer ${styles.msgUserImage}`} style={{ backgroundImage: `url(${myMsg ? myImage ? myImage : defaultImg  : friendImage ? friendImage : defaultImg})`}}></div> : null
                 }   
                 {
                     !showUser? <div className={`hyphen ${styles.shortTime}`}>{moment(date).format('hh:mm')}</div> : null
@@ -24,18 +23,7 @@ const MessageForm = ({socket ,id,myName,myCode,myPicToken,myPicType, msgWriterNa
              <div className={`${styles.textDiv}`}>
                 {
                     showUser ? <div className={`${styles.msgUserName} ${myMsg ? '' : styles.friendNameMsg}`} >
-                       <p onClick={()=> {
-                           window.history.pushState({}, document.title, `/?user=${msgWriterName}&code=${msgWriterCode}`);
-                           socket.emit('OpenWindow',{
-                               window : 'Profile'
-                            })
-                        }}>{msgWriterName}</p>
-                        <span className='hyphen'>#
-                        {msgWriterCode && msgWriterCode.toString().length == 1 ? "000" : ""}
-                        {msgWriterCode && msgWriterCode.toString().length == 2 ? "00" : ""}
-                        {msgWriterCode && msgWriterCode.toString().length == 3 ? "0" : ""}
-                        {msgWriterCode}
-                        </span>
+                       <p>{myMsg ? myId : friendId}</p>
                         <div className={`hyphen ${styles.longTime}`}>
                             {
                                 moment(date).format('hh:mm A')
@@ -45,7 +33,7 @@ const MessageForm = ({socket ,id,myName,myCode,myPicToken,myPicType, msgWriterNa
                 }
                 {flag == 'active' ?              
                  <>
-                    {
+                    {/* {
                         mediaFiles || mediaFolder || tempMedia ? <>
                      <div className={`${styles.msgMediaHolder}`}>
                     {
@@ -105,7 +93,7 @@ const MessageForm = ({socket ,id,myName,myCode,myPicToken,myPicType, msgWriterNa
                 }
                     </div>
                         </>: null
-                    }
+                    } */}
                     {
                         text ? <>
                         {

@@ -5,16 +5,18 @@ import { useDispatch, useSelector } from 'react-redux'
 import styles from '../styles/Chat.module.css'
 import { ShowError } from '../components/error'
 import MessageForm from '../components/Message'
-import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, where } from "firebase/firestore";
 import { app } from "./_app";
 import { fetchSocket } from "../store/actions/socketAction";
+import Router from 'next/router'
+import { withIronSessionSsr } from "iron-session/next";
 
 const db = getFirestore(app);
 
-const Chat: NextPage = () => {
+const Chat: NextPage = ({user} : any) => {
     
     const dispatch : any = useDispatch();
-    let { user } = useSelector((state: any) => state.user)
+
     let { socket } = useSelector((state: any) => state.socket)
 
     let messageText : any = useRef(null)
@@ -26,10 +28,8 @@ const Chat: NextPage = () => {
     let [writtenMessagesCounter , SetWrittenMessagesCounter] = useState(0)
     let [mediaMessagesCounter , SetMediaMessagesCounter] = useState(0)
 
-    let lastMsgFromUserNameRef = useRef(null)
-    let lastMsgFromUserCodeRef = useRef(null)
-    let [lastMsgFromUserName , SetLastMsgFromUserName] = useState(null)
-    let [lastMsgFromUserCode , SetLastMsgFromUserCode] = useState(null)
+    let lastMsgFromUserIdRef = useRef(null)
+    let [lastMsgFromUserId , SetLastMsgFromUserId] = useState(null)
 
     // let mediaFileRef  : any = useRef(null);
     // let [mediaUploaded , SetMediaUploaded] = useState([])
@@ -41,6 +41,7 @@ const Chat: NextPage = () => {
 
     const [friendInfo , SetFriendInfo] = useState<friendInfo>();
     interface friendInfo{
+        id: string;
         image : string;
         name : string;
         email: string;
@@ -60,7 +61,7 @@ const Chat: NextPage = () => {
       if(!socket){ dispatch(fetchSocket()) }
     },[socket])
     useEffect(()=>{
-        if(!friendInfo){
+        if(!friendInfo && user.id && socket){
             const queryString = window.location.search;
             const urlParams = new URLSearchParams(queryString);
             const id = urlParams.get('id')
@@ -68,72 +69,93 @@ const Chat: NextPage = () => {
                 fetchDocument(id)
             }
         }
+    },[friendInfo , user , socket])
+    useEffect(()=>{
+        friendInfo && friendInfo.id && fetchMessages(chatCurrentPage + 25);
     },[friendInfo])
     async function fetchDocument(id : string){
         const docRef = doc(db, "users", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            SetFriendInfo(docSnap.data() as friendInfo)
+            let data = docSnap.data();
+            data.id = docRef.id;
+            SetFriendInfo(data as friendInfo)
+            socket.emit('joinRoom' , {friendId : docRef.id ,userId: user.id})
         } else {
-        // doc.data() will be undefined in this case
-        console.log("No such document!");
+            console.log("No such user!");
         }
+    }
+    async function fetchMessages(page : number){
+        const citiesRef = collection(db, "messages");
+        const q = query(citiesRef, 
+            // where("FromUser_ID", "==", user.id), 
+            // where("ToUser_ID", "==", friendInfo?.id), 
+            orderBy("Text_Date", "desc"),
+            limit(10)
+            );
+            console.log()
+        const querySnapshot = await getDocs(q);
+        const cityList : any = querySnapshot.docs.map((doc : any) => { 
+            let temp = doc.data();
+            temp.Text_ID = doc.id;
+            temp.User_Id = temp.FromUser_ID;
+            temp.User_Image = temp.FromUser_ID == user.id ? user.image : friendInfo?.image;
+            return temp;
+        });
+        console.log(cityList)
+        SetChatPage(page);
+        // if(data.refresh){
+        //     chatPrevListRef.current = []
+        //     SetChatList([])
+        // }
+        if(!cityList) return;
+        cityList.reverse();
+        let userId : string;
+        cityList.forEach((msg : any) => {
+            msg.showUser = true
+            if(userId === msg.User_Id) 
+                msg.showUser = false
+            else{
+                userId = msg.User_Id
+            }
+        });
+        cityList.reverse();
+        // cityList.forEach((msg  : any, index : number) => {
+        //     if(data.unSeenMsgsCount != null && data.unSeenMsgsCount > -1 && data.unSeenMsgsCount  === index)
+        //         msg.newMessages = data.unSeenMsgsCount;
+        // });
+
+        chatPrevListRef.current = chatPrevListRef.current ? [...chatPrevListRef.current].concat(cityList) : cityList
+        SetChatList(chatPrevListRef.current)
+        SetFetchMoreMsgs(true);
+        socket.emit('showChatHistory',{friendId : friendInfo?.id ,userId: user.id})
     }
     useEffect(()=>{
         if(!socket) return;
         // socket.on('SetCallFromChat',(data)=>{
         //     SetInCall(data.inCall);
         // })
-        socket.emit('showChatHistory',{
-            page : chatCurrentPage
-        })
-        socket.on('refreshChat',()=>{
-            chatPrevListRef.current = []
-            SetChatList(chatPrevListRef.current)
-            socket.emit('showChatHistory',{
-                page : 1,
-                refresh : true
-            })
-        })
+
+        // socket.on('refreshChat',()=>{
+        //     chatPrevListRef.current = []
+        //     SetChatList(chatPrevListRef.current)
+        //     socket.emit('showChatHistory',{
+        //         page : 1,
+        //         refresh : true
+        //     })
+        // })
         socket.on('showChatHistory', function(data : any) {
             if(!data ) return;
-            let chatlogHistory = JSON.parse(data.chatLog);
-            SetChatPage(data.page);
-            if(data.refresh){
-                chatPrevListRef.current = []
-                SetChatList([])
-            }
-            if(!chatlogHistory) return;
-            chatlogHistory.reverse();
-            let name : string;
-            let code : string;
-            chatlogHistory.forEach((msg : any) => {
-                msg.showUser = true
-                if(name === msg.User_Name && code === msg.User_Code) 
-                msg.showUser = false
-                else{
-                    name = msg.User_Name
-                    code = msg.User_Code
-                }
-            });
-            chatlogHistory.reverse();
-            chatlogHistory.forEach((msg  : any, index : number) => {
-                if(data.unSeenMsgsCount != null && data.unSeenMsgsCount > -1 && data.unSeenMsgsCount  === index)
-                    msg.newMessages = data.unSeenMsgsCount;
-            });
-
-            chatPrevListRef.current = chatPrevListRef.current ? [...chatPrevListRef.current].concat(chatlogHistory) : chatlogHistory
-            SetChatList(chatPrevListRef.current)
-            SetFetchMoreMsgs(true);
+           
         })
         socket.on('sendMessage', function(data : any) {
             if (data.myself) {
-                if(isNaN(data.textID) || isNaN(data.oldID)) return;
+                if(!data.textID || isNaN(data.oldID)) return;
                 let old_ID = data.isMedia ? "oldMedia_"+ data.oldID : "oldText_"+ data.oldID
                 let message : any = [...chatPrevListRef.current].find((msg : any) => msg.Old_ID == old_ID)
                 const index = [...chatPrevListRef.current].indexOf(message)
                 if(!message)return;
-                message.Text_ID = parseInt(data.textID);
+                message.Text_ID = data.textID;
                 message.Text_Status = "sent"
                 if(data.isMedia){
                     message.Text_MediaFolder = data.folderName;
@@ -150,25 +172,27 @@ const Chat: NextPage = () => {
                     return newArr;
                 })
             } else {
+                if(!data.message 
+                    // && !data.folderName && !data.tempFiles
+                    ) return;
+                if(!data.textID|| !data.userId 
+                    // || !data.unSeenMsgsCount
+                    ) return;
+                // if(data.userId !== user.Id) return;
 
-                // if(!data.message && !data.folderName && !data.tempFiles) return;
-                // if(isNaN(data.textID) || !data.name || !data.code || !data.unSeenMsgsCount) return;
-                // if(data.name !== WindowLoad.name && data.code !== WindowLoad.code) return;
-                // let showUser = true;
-                // if(data.name === lastMsgFromUserNameRef.current && data.code=== lastMsgFromUserCodeRef.current)
-                //     showUser = false; 
-                // else{
-                //     lastMsgFromUserNameRef.current = (data.name);
-                //     lastMsgFromUserCodeRef.current = (data.code);
-                // }
-                // SetLastMsgFromUserName(null);
-                // SetLastMsgFromUserCode(null);
-                // CreateMessageHolder(parseInt(data.textID),data.message, null  , data.folderName , data.tempFiles ,data.name,data.code,data.prof,data.token , showUser)
-                // socket.emit('msgsSeen')
+                let showUser = true;
+                if(data.userId === lastMsgFromUserIdRef.current)
+                    showUser = false; 
+                else{
+                    lastMsgFromUserIdRef.current = (data.userId);
+                }
+                SetLastMsgFromUserId(null);
+                CreateMessageHolder(data.textID,data.message, null  , data.folderName , data.tempFiles ,data.image,data.userId, showUser)
+                socket.emit('msgsSeen')
             }
           })
           socket.on('msgsRecieved', function(data : any) {
-            if(!data.name && !data.code && !chatPrevListRef.current) return;
+            if(!data.Id && !chatPrevListRef.current) return;
             let arrlist : any = [...chatPrevListRef.current];
             arrlist.forEach((element : any) => {
                 element.Text_Status = 'recieved'
@@ -177,7 +201,7 @@ const Chat: NextPage = () => {
             SetChatList(arrlist)
         })
         socket.on('msgsSeen', function(data : any) {
-            if(!data.name && !data.code && !chatPrevListRef.current) return;
+            if(!data.Id && !chatPrevListRef.current) return;
             
             let arrlist : any = [...chatPrevListRef.current];
             arrlist.forEach((element : any) => {
@@ -220,10 +244,9 @@ const Chat: NextPage = () => {
           })
     },[socket])
 
-    function CreateMessageHolder(id : any,text  : any, Text_TempMedia : any , Text_MediaFolder : any ,Text_MediaFiles : any ,name : any,code : any,prof : any,token : any , showUser : any){
+    function CreateMessageHolder(id : any,text  : any, Text_TempMedia : any , Text_MediaFolder : any ,Text_MediaFiles : any , image : any, userId : any , showUser : any){
 
-        let newArr = {Old_ID: id, Text_ID: null, User_Name:name, User_Code : code, User_Prof : prof, User_Token : token, Text_Message:text,Text_Date:new Date(),Text_Edit:'original', Text_Status:"waiting",Text_View : "unSeen" , showUser , Text_TempMedia  , Text_MediaFiles , Text_MediaFolder , Text_Flag : 'active'}
-
+        let newArr = {Old_ID: id, Text_ID: null, User_Id:userId, User_Image : image, Text_Message:text,Text_Date:new Date(),Text_Edit:'original', Text_Status:"waiting",Text_View : "unSeen" , showUser , Text_TempMedia  , Text_MediaFiles , Text_MediaFolder , Text_Flag : 'active'}
         chatPrevListRef.current = chatPrevListRef.current ? [newArr].concat([...chatPrevListRef.current]) : [newArr];
         SetChatList(chatPrevListRef.current)
         
@@ -289,19 +312,17 @@ const Chat: NextPage = () => {
             let showUser = true;
             let mediaAndText = false;
 
-            if(user.name === lastMsgFromUserName && user.code=== lastMsgFromUserCode)
+            if(user.Id === lastMsgFromUserId)
                 showUser = false; 
             else{
-                SetLastMsgFromUserName(user.name);
-                SetLastMsgFromUserCode(user.code);
+                SetLastMsgFromUserId(user.Id);
             }
-            lastMsgFromUserNameRef.current = null;
-            lastMsgFromUserCodeRef.current = null;
+            lastMsgFromUserIdRef.current = null;
             if(messageText.current?.value.trim().length != 0){
                 if(mediaAndText) showUser = false
                 let message = messageText.current.value.trim()
-                CreateMessageHolder("oldText_"+writtenMessagesCounter, message,null, null , null , user.name, user.code  , user.prof,user.token, showUser)
-                socket.emit('sendMessage', { message, id : writtenMessagesCounter})
+                CreateMessageHolder("oldText_"+writtenMessagesCounter, message,null, null , null  , user.image, user.id, showUser)
+                socket.emit('sendMessage', { message, oldId : writtenMessagesCounter , userId: user.id  , friendId: friendInfo?.id})
                 messageText.current.value = '';
                 mediaAndText = true;
                 messageText.current.style.height ='25px'
@@ -440,7 +461,12 @@ const Chat: NextPage = () => {
                 })
             }
         } 
-
+    useEffect(() => {
+        const {pathname} = Router
+        if(pathname == '/' && !user){
+            Router.push('/auth')
+        }
+    });
     if(!friendInfo) return null;
     return (
         <>
@@ -451,7 +477,7 @@ const Chat: NextPage = () => {
                 // !inCall ? 
                 <div className={`${styles.friendNameChat}`}>
                     <div className={`${styles.userName}`}>
-                        <p>{friendInfo.name}</p>
+                       {friendInfo.name}
                     </div>
                     {/* <div className={`${styles.utilities}`}>
                         <span className='secondLayer bi bi-telephone-fill' onClick={()=>{ 
@@ -467,7 +493,7 @@ const Chat: NextPage = () => {
                 <div ref={messagesEndRef}/>
                 {
                     chatList && chatList.length > 0 ? chatList.map( (msg : any) =>{
-                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myName={user.name} myCode={user.code} myPicToken={user.token} myPicType={user.prof} msgWriterName={msg.User_Name} msgWriterCode={msg.User_Code} talkingWithPicToken={msg.User_Token} talkingWithPicType={msg.User_Prof} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser}/>
+                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myId={user.Id} myImage={user.image} friendId={msg.User_Id} friendImage={msg.User_Image} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser}/>
                             {/* {
                                 msg.newMessages ? <div className={`${styles.newMessages}`}>{`(${msg.newMessages}) new message${msg.newMessages > 1 ? 's' : ''}`}</div> : null
                             } */}
@@ -535,3 +561,28 @@ export function checkAcceptedExtensions (file : any) {
 	}
 	return true
 }
+
+
+export const getServerSideProps = withIronSessionSsr(
+    async function getServerSideProps({ req }) {
+      const sess = req.session;
+      if(sess && Object.keys(sess).length === 0 && Object.getPrototypeOf(sess) === Object.prototype)
+        return {
+          props: {}
+        }
+      else
+        return {
+          props: {
+            user : (req.session as any).user
+          },
+        };
+    },
+    {
+      cookieName: "myapp_cookiename",
+      password: "complex_password_at_least_32_characters_long",
+      // secure: true should be used in production (HTTPS) but can't be used in development (HTTP)
+      cookieOptions: {
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  );

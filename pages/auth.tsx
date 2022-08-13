@@ -80,8 +80,10 @@ import styles from '../styles/Auth.module.css'
         } as any;
         if(querySnapshot.size == 0){
             await setDoc(newCityRef, data);
+            data.id = newCityRef.id;
+        }else{
+            data.id = querySnapshot.docs[0].id;
         }
-        data.id = newCityRef.id;
         const res = await axios.post('/api/login',data).then((res : any) => res.data ).catch((error : any) => error );
         if(res.ok === 200){
             Router.push('/')

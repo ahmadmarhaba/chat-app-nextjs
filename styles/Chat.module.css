@@ -42,7 +42,6 @@
     font-size: 21px;
     padding: 0%;
     height: 25px;
-    color: #f9f9f9;
   }
   .inputHolder label{
     padding: 0px 12px;
@@ -60,6 +59,9 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    border: 2px solid #e3e3e3;
+    padding: 12px;
+    border-radius: 5px;
   }
   .utilities span{
     width: 48px;
@@ -76,10 +78,9 @@
     display: flex;
     align-items: center;
   }
-  .friendNameChat p{
-    margin: 0;
-    font-size: 30px;
-    margin-right: 10px;
+  .friendNameChat div{
+    font-size: 22px;
+    font-weight: 400;
   }
   .msgSeen {
     color: #ff3232;
@@ -129,7 +130,7 @@
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
-    border-radius:5px;
+    border-radius:50%;
     
   }
   .senderTime {
@@ -168,8 +169,9 @@
     flex-direction: column;
     justify-content: space-between;
   }
+
   .msgContainer:hover{
-    background-color: #3a3a3a;
+    background-color: #e3e3e3;
   }
   .msgContainer:hover .shortTime{
     visibility: visible;
@@ -350,21 +352,21 @@
     background-color: #3a3a3a;
   }
   .MainDisplay{
-    width: 42em;
-    height: 96vh;
-    margin: 2vh auto;
-    padding: 10px;
-    border: 1px solid #404040;
-    border-radius: 5px;
+    max-width: 46em;
+    height: 100vh;
+    margin: auto;
+    padding: 16px;
+    width: 100%;
   }
   .InputField{
     width: 100%;
     font-size: 21px;
-    border: 2px solid #f3f3f3;
+    border: 2px solid #e3e3e3;
     padding: 12px;
     border-radius: 5px;
     resize: none;
     margin: 0;
+    background-color: transparent;
   }
   .InputField:disabled{
     user-select: none;
@@ -379,5 +381,5 @@
     border-color: #ff3232 !important;
   }
   .unInteractiveLayer{
-    background-color: #707070;
+    background-color: #e3e3e3;
   }
