@@ -1,0 +1,9 @@
+const prefix = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
+//if I have an image on server just use it like this
+// ...
+// import { prefix } from '../../utils/prefix.js';
+// ...
+//     <img src={`${prefix}/someimage.jpg`} alt='some alt text' />
+// ...
+export { prefix };
