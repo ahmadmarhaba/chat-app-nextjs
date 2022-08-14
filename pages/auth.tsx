@@ -110,7 +110,8 @@ import { withIronSessionSsr } from "iron-session/next";
                     <ul>
                         <li><h2>{`Chat Web App`}</h2></li>
                         <li>{`- Made with Firebase Authentication, Firebase Database, Nodejs, and Nextjs.`}</li>
-                        <li>{`- Send and Recieve 1 on 1 private messages to any user.`}</li>
+                        <li>{`- Send and Recieve messages from and to any user.`}</li>
+                        <li>{`- Edit and Delete any message you want in real-time.`}</li>
                         <li>{`- Just login then search for the user you wana message.`}</li>
                         {/* <li>{`- This is a public free-to-use chat app, so you can use in your own projects.`}</li> */}
                         <li>{`- Easy and Simple!!!`}</li>
