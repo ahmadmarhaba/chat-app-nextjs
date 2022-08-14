@@ -1,6 +1,6 @@
 import * as types from '../types'
 import { io } from 'socket.io-client'
-const ENDPOINT = "http://localhost:5000";
+const ENDPOINT = "https://ahmadmarhaba-chat-app-nextjs.herokuapp.com";
 
 export const fetchSocket = () => async (dispatch : any) => {
     dispatch({
