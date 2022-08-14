@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import moment from "moment";
 import styles from '../styles/Chat.module.css'
 
-const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag} : any)=> {
+const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag , talkingTo} : any)=> {
 
     let [myMsg,SetMyMSg] = useState( myId === friendId);
 
@@ -125,7 +125,9 @@ const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date
                         }
                             <span className='borderColor bi bi-trash3' onClick={()=>{
                                     socket.emit('deleteMsg', {
-                                        textID: id
+                                        textID : id,
+                                        userId : myId,
+                                        friendId : talkingTo
                                     })
                             }}></span>
                         </> : null
@@ -139,8 +141,10 @@ const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date
                                 if(currentText.length == 0) return;
                                 SetTextBeingEdited(false)
                                 socket.emit('editMsg', {
-                                    textID: id,
-                                    message: currentText
+                                    textID : id,
+                                    message: currentText,
+                                        userId : myId,
+                                        friendId : talkingTo
                                     });
                                 }}></span>
                         </> : null

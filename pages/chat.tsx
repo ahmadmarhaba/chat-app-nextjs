@@ -174,10 +174,10 @@ const Chat: NextPage = ({user} : any) => {
         //         refresh : true
         //     })
         // })
-        socket.on('showChatHistory', function(data : any) {
-            if(!data ) return;
+        // socket.on('showChatHistory', function(data : any) {
+        //     if(!data ) return;
            
-        })
+        // })
         socket.on('sendMessage', function(data : any) {
             if (data.myself) {
                 if(!data.textID || isNaN(data.oldID)) return;
@@ -217,7 +217,7 @@ const Chat: NextPage = ({user} : any) => {
                     lastMsgFromUserIdRef.current = (data.userId);
                 }
                 SetLastMsgFromUserId(null);
-                CreateMessageHolder(data.textID,data.message, null  , data.folderName , data.tempFiles ,data.image,data.userId, showUser)
+                CreateMessageHolder(null , data.textID,data.message, null  , data.folderName , data.tempFiles ,friendInfoRef.current?.image,friendInfoRef.current?.id, showUser)
 
                 socket.emit('msgsSeen',{friendId : friendInfoRef.current?.id ,userId: user.id})
             }
@@ -242,10 +242,11 @@ const Chat: NextPage = ({user} : any) => {
           });
         socket.on('deleteMsg', function(data : any) {
             let message : any = [...chatPrevListRef.current].find(msg => msg.Text_ID == data.textID)
+
             const index = [...chatPrevListRef.current].indexOf(message)
             if(!message)return;
             message.Text_Message = 'Message has been deleted';
-            message.Text_Flag ='inActive'
+            message.Text_Flag ='inactive'
             SetChatList((oldArray : any) => {
                 let newArr = [
                     ...oldArray.slice(0, index),
@@ -257,6 +258,7 @@ const Chat: NextPage = ({user} : any) => {
             })
           });
           socket.on('editMsg', function(data : any) {
+            console.log(data)
             let message = [...chatPrevListRef.current].find(msg => msg.Text_ID == data.textID)
             const index = [...chatPrevListRef.current].indexOf(message)
             if(!message)return;
@@ -274,10 +276,12 @@ const Chat: NextPage = ({user} : any) => {
           })
     },[socket])
 
-    function CreateMessageHolder(id : any,text  : any, Text_TempMedia : any , Text_MediaFolder : any ,Text_MediaFiles : any , image : any, userId : any , showUser : any){
+    function CreateMessageHolder(oldId : any , newId : any,text  : any, Text_TempMedia : any , Text_MediaFolder : any ,Text_MediaFiles : any , image : any, userId : any , showUser : any){
 
-        let newArr = {Old_ID: id, Text_ID: null, User_Id:userId, User_Image : image, Text_Message:text,Text_Date:new Date(),Text_Edit:'original', Text_Status:"waiting",Text_View : "unSeen" , showUser , Text_TempMedia  , Text_MediaFiles , Text_MediaFolder , Text_Flag : 'active'}
+        let newArr = {Old_ID: oldId, Text_ID: newId, User_Id:userId, User_Image : image, Text_Message:text,Text_Date:new Date(),Text_Edit:'original', Text_Status:"waiting",Text_View : "unSeen" , showUser , Text_TempMedia  , Text_MediaFiles , Text_MediaFolder , Text_Flag : 'active'}
+
         chatPrevListRef.current = chatPrevListRef.current ? [newArr].concat([...chatPrevListRef.current]) : [newArr];
+
         SetChatList(chatPrevListRef.current)
         
         scrollToBottom()
@@ -351,7 +355,7 @@ const Chat: NextPage = ({user} : any) => {
             if(messageText.current?.value.trim().length != 0){
                 if(mediaAndText) showUser = false
                 let message = messageText.current.value.trim()
-                CreateMessageHolder("oldText_"+writtenMessagesCounter, message,null, null , null  , user.image, user.id, showUser)
+                CreateMessageHolder("oldText_"+writtenMessagesCounter,null, message,null, null , null  , user.image, user.id, showUser)
                 socket.emit('sendMessage', { message, oldId : writtenMessagesCounter , userId: user.id  , friendId: friendInfo?.id})
                 messageText.current.value = '';
                 mediaAndText = true;
@@ -525,7 +529,7 @@ const Chat: NextPage = ({user} : any) => {
                 <div ref={messagesEndRef}/>
                 {
                     chatList && chatList.length > 0 ? chatList.map( (msg : any) =>{
-                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myId={user.id} myImage={user.image} friendId={msg.User_Id} friendImage={msg.User_Image} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser}/>
+                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myId={user.id} myImage={user.image} friendId={msg.User_Id} friendImage={msg.User_Image} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser} talkingTo={friendInfo.id}/>
                             {/* {
                                 msg.newMessages ? <div className={`${styles.newMessages}`}>{`(${msg.newMessages}) new message${msg.newMessages > 1 ? 's' : ''}`}</div> : null
                             } */}
