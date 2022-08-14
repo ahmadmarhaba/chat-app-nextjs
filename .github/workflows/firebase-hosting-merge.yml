@@ -25,8 +25,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install packages and build and export static files
         run: npm ci && npm run build
-      - name: Add .nojekyll file
-        run: touch ./out/.nojekyll
+      # - name: Add .nojekyll file
+      #   run: touch ./out/.nojekyll
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
