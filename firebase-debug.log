@@ -1,0 +1,25 @@
+[debug] [2022-08-14T11:50:07.832Z] ----------------------------------------------------------------------
+[debug] [2022-08-14T11:50:07.834Z] Command:       C:\PROGRA~1\nodejs\node.exe C:\Users\ZER0FO~1\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init
+[debug] [2022-08-14T11:50:07.834Z] CLI Version:   11.6.0
+[debug] [2022-08-14T11:50:07.835Z] Platform:      win32
+[debug] [2022-08-14T11:50:07.835Z] Node Version:  v16.10.0
+[debug] [2022-08-14T11:50:07.836Z] Time:          Sun Aug 14 2022 14:50:07 GMT+0300 (GMT+03:00)
+[debug] [2022-08-14T11:50:07.836Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2022-08-14T11:50:07.842Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2022-08-14T11:50:07.843Z] > authorizing via signed-in user (ahmadmarhaba.8881@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Projects\chat-app-nextjs
+
+Before we get started, keep in mind:
+
+  * You are currently outside your home directory
+

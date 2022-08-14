@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import styles from '../styles/Chat.module.css'
 import { ShowError } from '../components/error'
 import MessageForm from '../components/Message'
-import { collection, doc, getDoc, getDocs, getFirestore, limit, orderBy, query, where } from "firebase/firestore";
+import { collection, doc, DocumentData, getDoc, getDocs, getFirestore, limit, orderBy, query, startAfter, where } from "firebase/firestore";
 import { app } from "./_app";
 import { fetchSocket } from "../store/actions/socketAction";
 import Router from 'next/router'
@@ -31,15 +31,20 @@ const Chat: NextPage = ({user} : any) => {
     let lastMsgFromUserIdRef = useRef(null)
     let [lastMsgFromUserId , SetLastMsgFromUserId] = useState(null)
 
+    let [lastVisible , SetLastVisible] = useState<DocumentData>()
+
     // let mediaFileRef  : any = useRef(null);
     // let [mediaUploaded , SetMediaUploaded] = useState([])
     // let mediaUploadedRef : any = useRef(mediaUploaded)
     
     let [fetchMoreMsgs , SetFetchMoreMsgs]  = useState(false);
-    let [chatCurrentPage , SetChatPage]  = useState(1);
+
+    const defaultPageGap = 30;
+    let [chatPage , SetChatPage]  = useState(defaultPageGap);
     // const [inCall , SetInCall]  = useState<boolean>(WindowLoad.inCall);
 
     const [friendInfo , SetFriendInfo] = useState<friendInfo>();
+    const friendInfoRef = useRef<friendInfo>();
     interface friendInfo{
         id: string;
         image : string;
@@ -71,47 +76,73 @@ const Chat: NextPage = ({user} : any) => {
         }
     },[friendInfo , user , socket])
     useEffect(()=>{
-        friendInfo && friendInfo.id && fetchMessages(chatCurrentPage + 25);
+        if(user && friendInfo && friendInfo.id && socket){
+            fetchMessages();
+            socket.emit('msgsSeen',{friendId : friendInfo?.id ,userId: user.id})
+        }
     },[friendInfo])
     async function fetchDocument(id : string){
         const docRef = doc(db, "users", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            let data = docSnap.data();
+            let data : any = docSnap.data();
             data.id = docRef.id;
-            SetFriendInfo(data as friendInfo)
+            SetFriendInfo(data as friendInfo);
+            friendInfoRef.current = data;
             socket.emit('joinRoom' , {friendId : docRef.id ,userId: user.id})
         } else {
             console.log("No such user!");
         }
-    }
-    async function fetchMessages(page : number){
+    } 
+    async function queryMessages(fromId : any , toId : any) {
         const citiesRef = collection(db, "messages");
-        const q = query(citiesRef, 
-            // where("FromUser_ID", "==", user.id), 
-            // where("ToUser_ID", "==", friendInfo?.id), 
+        const q = lastVisible ? query(citiesRef, 
+            where("FromUser_ID", "==", fromId), 
+            where("ToUser_ID", "==", toId), 
             orderBy("Text_Date", "desc"),
-            limit(10)
-            );
-            console.log()
-        const querySnapshot = await getDocs(q);
-        const cityList : any = querySnapshot.docs.map((doc : any) => { 
+            startAfter(lastVisible),
+            limit(chatPage)
+        ): query(citiesRef, 
+            where("FromUser_ID", "==", fromId), 
+            where("ToUser_ID", "==", toId), 
+            orderBy("Text_Date", "desc"),
+            limit(chatPage)
+        );
+        return await getDocs(q);
+    }
+    function docMessages(querySnapshot : any){
+        const cityList : any = querySnapshot.map((doc : any) => { 
             let temp = doc.data();
             temp.Text_ID = doc.id;
             temp.User_Id = temp.FromUser_ID;
             temp.User_Image = temp.FromUser_ID == user.id ? user.image : friendInfo?.image;
             return temp;
         });
-        console.log(cityList)
-        SetChatPage(page);
+        return cityList;
+    }
+    async function fetchMessages(){
+        const doc1 = await queryMessages(user.id , friendInfo?.id);
+        const doc2 = await queryMessages(friendInfo?.id, user.id)
+        
+        const doc = [...doc1.docs , ...doc2.docs];
+        let messages = docMessages(doc);
+        if(!messages || messages.length == 0) return;
+
+        messages.sort((a : any, b : any) => {
+            return a.Text_Date - b.Text_Date;
+        });
+        messages = messages.slice(Math.max(messages.length - defaultPageGap, 0));
+        let message : any = doc.find((msg : any) => msg.id == messages[0].Text_ID);
+        SetLastVisible(message);
+        
+        SetChatPage(chatPage + defaultPageGap);
         // if(data.refresh){
-        //     chatPrevListRef.current = []
+            //     chatPrevListRef.current = []
         //     SetChatList([])
         // }
-        if(!cityList) return;
-        cityList.reverse();
+
         let userId : string;
-        cityList.forEach((msg : any) => {
+        messages.forEach((msg : any) => {
             msg.showUser = true
             if(userId === msg.User_Id) 
                 msg.showUser = false
@@ -119,16 +150,15 @@ const Chat: NextPage = ({user} : any) => {
                 userId = msg.User_Id
             }
         });
-        cityList.reverse();
+        messages.reverse();
         // cityList.forEach((msg  : any, index : number) => {
         //     if(data.unSeenMsgsCount != null && data.unSeenMsgsCount > -1 && data.unSeenMsgsCount  === index)
         //         msg.newMessages = data.unSeenMsgsCount;
         // });
 
-        chatPrevListRef.current = chatPrevListRef.current ? [...chatPrevListRef.current].concat(cityList) : cityList
+        chatPrevListRef.current = chatPrevListRef.current ? [...chatPrevListRef.current].concat(messages) : messages
         SetChatList(chatPrevListRef.current)
         SetFetchMoreMsgs(true);
-        socket.emit('showChatHistory',{friendId : friendInfo?.id ,userId: user.id})
     }
     useEffect(()=>{
         if(!socket) return;
@@ -188,11 +218,12 @@ const Chat: NextPage = ({user} : any) => {
                 }
                 SetLastMsgFromUserId(null);
                 CreateMessageHolder(data.textID,data.message, null  , data.folderName , data.tempFiles ,data.image,data.userId, showUser)
-                socket.emit('msgsSeen')
+
+                socket.emit('msgsSeen',{friendId : friendInfoRef.current?.id ,userId: user.id})
             }
           })
           socket.on('msgsRecieved', function(data : any) {
-            if(!data.Id && !chatPrevListRef.current) return;
+            if(!chatPrevListRef.current) return;
             let arrlist : any = [...chatPrevListRef.current];
             arrlist.forEach((element : any) => {
                 element.Text_Status = 'recieved'
@@ -201,8 +232,7 @@ const Chat: NextPage = ({user} : any) => {
             SetChatList(arrlist)
         })
         socket.on('msgsSeen', function(data : any) {
-            if(!data.Id && !chatPrevListRef.current) return;
-            
+            if(!chatPrevListRef.current) return;
             let arrlist : any = [...chatPrevListRef.current];
             arrlist.forEach((element : any) => {
                 element.Text_View = 'seen'
@@ -456,9 +486,7 @@ const Chat: NextPage = ({user} : any) => {
             const bottom = e.target.scrollHeight + e.target.scrollTop  <= e.target.clientHeight + 250;
             if(bottom && fetchMoreMsgs){
                 SetFetchMoreMsgs(false);
-                socket.emit('showChatHistory' , {
-                    page : chatCurrentPage 
-                })
+                user && friendInfo && friendInfo.id && fetchMessages();
             }
         } 
     useEffect(() => {
@@ -476,6 +504,10 @@ const Chat: NextPage = ({user} : any) => {
             {
                 // !inCall ? 
                 <div className={`${styles.friendNameChat}`}>
+                    <div className={styles.backButton} onClick={() => { Router.push('/') }}>
+                        <span className="bi bi-arrow-left"></span>
+                        <div>Back</div>
+                    </div>
                     <div className={`${styles.userName}`}>
                        {friendInfo.name}
                     </div>
@@ -493,7 +525,7 @@ const Chat: NextPage = ({user} : any) => {
                 <div ref={messagesEndRef}/>
                 {
                     chatList && chatList.length > 0 ? chatList.map( (msg : any) =>{
-                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myId={user.Id} myImage={user.image} friendId={msg.User_Id} friendImage={msg.User_Image} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser}/>
+                        return  <MessageForm key={msg.Text_ID ? msg.Text_ID : msg.Old_ID} socket={socket} id={msg.Text_ID} myId={user.id} myImage={user.image} friendId={msg.User_Id} friendImage={msg.User_Image} text={msg.Text_Message} date={msg.Text_Date} flag={msg.Text_Flag} textEdited={msg.Text_Edit} status={msg.Text_Status} view={msg.Text_View}  tempMedia={msg.Text_TempMedia}  mediaFiles={msg.Text_MediaFiles} mediaFolder={msg.Text_MediaFolder} showUser={msg.showUser}/>
                             {/* {
                                 msg.newMessages ? <div className={`${styles.newMessages}`}>{`(${msg.newMessages}) new message${msg.newMessages > 1 ? 's' : ''}`}</div> : null
                             } */}
@@ -538,7 +570,7 @@ const Chat: NextPage = ({user} : any) => {
                           </div>
                         ) 
                       })}
-                    </div> : null
+                    </div> : nullw
                 } */}
                 <div className={`${styles.InputField} ${styles.inputHolder}`}>
                     <textarea placeholder={`Type here...`} ref={messageText}  onKeyDown={handleKeyDown} maxLength={300} onInput={handleInput}/>

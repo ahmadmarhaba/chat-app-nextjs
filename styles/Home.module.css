@@ -55,10 +55,31 @@
   border: none;
   border-radius: 5px;
   font-size: 20px;
-  padding: 10px 20px;
+  width: 140px;
+  padding: 10px 0;
   float: right;
   cursor: pointer;
 }
 .signout:hover{
   background-color: #f70000;
+}
+.userDiv{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.userDiv span{
+  margin-left: 14px;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+.userDiv div{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.count{
+  font-size: 20px;
+    margin-bottom: 10px;
 }

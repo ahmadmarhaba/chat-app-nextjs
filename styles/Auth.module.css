@@ -8,15 +8,14 @@
 }
 .main input{
     width: 100%;
-    padding: 12px 18px;
+    padding: 11px 16px;
     font-size: 18px;
     margin-bottom: 1em;
     border-radius: 5px;
-    border: 2px solid #f0f0f0;
+    border: 2px solid transparent;
 }
 .main input[type=button]{
     cursor: pointer;
-    border: none;
 }
 .panels{
     display: flex;
@@ -36,12 +35,13 @@
 }
 .panels input{
     width: 49%;
-    background-color: #f1f1f1;
+    border-color: #e3e3e3;
 }
 .panels input:hover,  .socials input[type=button]:hover{
     background-color: #e3e3e3;
 }
 .selectedPanel{
+    border-color: transparent !important;
     background-color: #3762ff !important;
     color: white;
 }
@@ -66,4 +66,18 @@
     color: #ff2828;
     font-size: 20px;
     margin-bottom: 1em;
+  }
+  .socials input{
+    border-color: #e3e3e3;
+  }
+  .main ul{
+    padding: 16px;
+    list-style: none;
+    border: 2px solid #e3e3e3;
+    border-radius: 5px;
+  }
+  .main h2{
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 12px;
   }

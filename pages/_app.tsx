@@ -12,9 +12,8 @@ const firebaseConfig = {
   storageBucket: "chat-app-nextjs-4981b.appspot.com",
   messagingSenderId: "725063820157",
   appId: "1:725063820157:web:c58ebd5a15a84fa296e214",
-  measurementId: "G-T0M26G4MWD"
+  measurementId: "G-T0M26G4MWD",
 };
-
 export const app = initializeApp(firebaseConfig);
 
 function MyApp({ Component, pageProps }: AppProps) {

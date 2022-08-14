@@ -4,10 +4,11 @@ import { addDoc, collection, doc, getDocs, getFirestore, query, setDoc, where } 
 import { app } from './_app'
 import axios from 'axios'
 import Router from 'next/router'
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from '../styles/Auth.module.css'
+import { withIronSessionSsr } from "iron-session/next";
 
-  const SignIn: NextPage = () => {
+  const SignIn: NextPage = ({user}: any) => {
     const provider = new GoogleAuthProvider();
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -39,9 +40,9 @@ import styles from '../styles/Auth.module.css'
         SetError(``);
         createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            let user : any = userCredential.user;
-            user.displayName = name;
-            UserAuth(user)
+            let userD : any = userCredential.user;
+            userD.displayName = name;
+            UserAuth(userD)
         })
         .catch((error) => {
             console.error(error)
@@ -58,8 +59,8 @@ import styles from '../styles/Auth.module.css'
         SetError(``);
         signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            let user = userCredential.user;
-            UserAuth(user)
+            let userD = userCredential.user;
+            UserAuth(userD)
         })
         .catch((error) => {
             SetError("Email or Password wrong");
@@ -83,6 +84,7 @@ import styles from '../styles/Auth.module.css'
             data.id = newCityRef.id;
         }else{
             data.id = querySnapshot.docs[0].id;
+            data.name =  querySnapshot.docs[0].data().name;
         }
         const res = await axios.post('/api/login',data).then((res : any) => res.data ).catch((error : any) => error );
         if(res.ok === 200){
@@ -93,11 +95,26 @@ import styles from '../styles/Auth.module.css'
             SetLoading(false);
         }   
     }
+    useEffect(() => {
+        const {pathname} = Router
+        if(pathname == '/auth' && user){
+            Router.push('/')
+        }
+      });
+    if(user) return null
     if(loading) return <div className={styles.loading}>Loading...</div>;
     return (
         <>
 
                 <div className={styles.main}>
+                    <ul>
+                        <li><h2>{`Chat Web App`}</h2></li>
+                        <li>{`- Made with Firebase Authentication, Firebase Database, Nodejs, and Nextjs.`}</li>
+                        <li>{`- Send and Recieve 1 on 1 private messages to any user.`}</li>
+                        <li>{`- Just login then search for the user you wana message.`}</li>
+                        <li>{`- This is a public free-to-use chat app, so you can use in your own projects.`}</li>
+                        <li>{`- Easy, Simple, and Free!!!`}</li>
+                    </ul>
                     <div className={styles.panels}>
                         <input type="button" onClick={ () => { SetSignin(true); SetError(``) }} value={`Signin`} className={signin ? styles.selectedPanel : ''}/> 
                         <input type="button" onClick={ () => {SetSignin(false); SetError(``)}} value={`Signup`} className={!signin ? styles.selectedPanel : ''}/>
@@ -123,3 +140,28 @@ import styles from '../styles/Auth.module.css'
   }
   
   export default SignIn
+
+
+  export const getServerSideProps = withIronSessionSsr(
+    async function getServerSideProps({ req }) {
+      const sess = req.session;
+      if(sess && Object.keys(sess).length === 0 && Object.getPrototypeOf(sess) === Object.prototype)
+        return {
+          props: {}
+        }
+      else
+        return {
+          props: {
+            user : (req.session as any).user
+          },
+        };
+    },
+    {
+      cookieName: "myapp_cookiename",
+      password: "complex_password_at_least_32_characters_long",
+      // secure: true should be used in production (HTTPS) but can't be used in development (HTTP)
+      cookieOptions: {
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  );

@@ -5,6 +5,7 @@ import styles from '../styles/Chat.module.css'
 const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag} : any)=> {
 
     let [myMsg,SetMyMSg] = useState( myId === friendId);
+
     const defaultImg = `https://img.icons8.com/office/40/000000/test-account.png`;
     let EditedText : any = useRef(null);
     let [textBeingEdited, SetTextBeingEdited] = useState(false);
@@ -109,7 +110,6 @@ const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date
                         }
                         </> : null
                     }
-
                    {
                        myMsg?<div className={`${styles.checkMark} bi ${view === 'seen' ? styles.msgSeen :''} 
                        ${status === 'recieved' ? 'bi-check2-all' : status === 'sent' ? 'bi-check2' : 'bi-clock'}`}></div>: null
