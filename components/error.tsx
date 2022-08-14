@@ -3,12 +3,12 @@ export default function Error() {
         <input className={`${"ErrorLog"}`} id="ErrorLog" value="Error" type="button" onClick={() => HideError()}/>
     )
 }
-export const ShowError = (text)=>{
-    let errorElement = document.getElementById("ErrorLog");
+export const ShowError = (text : string)=>{
+    let errorElement : any = document.getElementById("ErrorLog");
     errorElement.style.display = "block";
     (errorElement as HTMLInputElement).value = text;
   }
  export function HideError(){
-    let errorElement = document.getElementById("ErrorLog");
+    let errorElement : any = document.getElementById("ErrorLog");
     errorElement.style.display = "none"
   }
