@@ -112,8 +112,8 @@ import { withIronSessionSsr } from "iron-session/next";
                         <li>{`- Made with Firebase Authentication, Firebase Database, Nodejs, and Nextjs.`}</li>
                         <li>{`- Send and Recieve 1 on 1 private messages to any user.`}</li>
                         <li>{`- Just login then search for the user you wana message.`}</li>
-                        <li>{`- This is a public free-to-use chat app, so you can use in your own projects.`}</li>
-                        <li>{`- Easy, Simple, and Free!!!`}</li>
+                        {/* <li>{`- This is a public free-to-use chat app, so you can use in your own projects.`}</li> */}
+                        <li>{`- Easy and Simple!!!`}</li>
                     </ul>
                     <div className={styles.panels}>
                         <input type="button" onClick={ () => { SetSignin(true); SetError(``) }} value={`Signin`} className={signin ? styles.selectedPanel : ''}/> 
