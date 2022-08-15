@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import moment from "moment";
 import styles from '../styles/Chat.module.css'
 
-const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag , talkingTo} : any)=> {
+const MessageForm = ({socket ,id,myId,myName,myImage, friendId,friendName, friendImage, text, date, textEdited, status, view,tempMedia , mediaFiles , mediaFolder , showUser , flag , talkingTo} : any)=> {
 
     let [myMsg,SetMyMSg] = useState( myId === friendId);
 
@@ -24,7 +24,7 @@ const MessageForm = ({socket ,id,myId,myImage, friendId, friendImage, text, date
              <div className={`${styles.textDiv}`}>
                 {
                     showUser ? <div className={`${styles.msgUserName} ${myMsg ? '' : styles.friendNameMsg}`} >
-                       <p>{myMsg ? myId : friendId}</p>
+                       <p>{myMsg ? myName : friendName}</p>
                         <div className={`hyphen ${styles.longTime}`}>
                             {
                                 moment(date).format('hh:mm A')
