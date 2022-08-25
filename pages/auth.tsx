@@ -7,6 +7,7 @@ import Router from 'next/router'
 import { useEffect, useRef, useState } from "react";
 import styles from '../styles/Auth.module.css'
 import { withIronSessionSsr } from "iron-session/next";
+import { initializeApp } from "firebase/app";
 
 const SignIn: NextPage = ({ user }: any) => {
     const provider = new GoogleAuthProvider();
