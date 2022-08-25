@@ -7,7 +7,6 @@ import Router from 'next/router'
 import { useEffect, useRef, useState } from "react";
 import styles from '../styles/Auth.module.css'
 import { withIronSessionSsr } from "iron-session/next";
-import { initializeApp } from "firebase/app";
 
 const SignIn: NextPage = ({ user }: any) => {
     const provider = new GoogleAuthProvider();
@@ -108,15 +107,6 @@ const SignIn: NextPage = ({ user }: any) => {
         <>
 
             <div className={styles.main}>
-                <ul>
-                    <li><h2>{`Chat Web App`}</h2></li>
-                    <li>{`- Made with Firebase Authentication, Firebase Database, Nodejs, and Nextjs.`}</li>
-                    <li>{`- Send and Recieve messages from and to any user.`}</li>
-                    <li>{`- Edit and Delete any message you want in real-time.`}</li>
-                    <li>{`- Just login then search for the user you wana message.`}</li>
-                    {/* <li>{`- This is a public free-to-use chat app, so you can use in your own projects.`}</li> */}
-                    <li>{`- Easy and Simple!!!`}</li>
-                </ul>
                 <div className={styles.panels}>
                     <input type="button" onClick={() => { SetSignin(true); SetError(``) }} value={`Signin`} className={signin ? styles.selectedPanel : ''} />
                     <input type="button" onClick={() => { SetSignin(false); SetError(``) }} value={`Signup`} className={!signin ? styles.selectedPanel : ''} />
